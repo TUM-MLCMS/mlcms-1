@@ -17,19 +17,25 @@ class CMS(tk.Canvas):
                          background="black",
                          highlightthickness=0)
         
-        self.grid = Grid(5, 5)
-        self.cell_size = 100
+        self.grid = Grid(10, 10)
+        self.cell_size = 50
 
-        self.grid_elements = [Pedestrian((0,0)), Obstacle((1,0)), Target((2,0)), Pedestrian((3,0)), Obstacle((4,0)), Obstacle((4,4))]
+        self.grid_elements = [Pedestrian((0,0))]
 
         self.rect_start_x = self.width // 2 - self.grid.cols / 2 * (self.cell_size) - (self.grid.cols + 1) / 2 * (self.offset)
         self.rect_start_y = self.height // 2 - self.grid.rows / 2 * (self.cell_size) - (self.grid.rows + 1) / 2 * (self.offset)
         self.rect_end_x = self.width // 2 + self.grid.cols / 2 * (self.cell_size) + (self.grid.cols + 1) / 2 * (self.offset)
         self.rect_end_y = self.height // 2 + self.grid.rows / 2 * (self.cell_size) + (self.grid.rows + 1) / 2 * (self.offset)
 
-        self.create()
+        self.loop()
 
-    def create(self):
+    def loop(self):
+        self.draw()
+        self.after(1000, self.loop)
+
+    def draw(self):
+        self.delete("all")
+
         self.create_rectangle(
             self.rect_start_x,
             self.rect_start_y,
@@ -39,6 +45,7 @@ class CMS(tk.Canvas):
         )
 
         for element in self.grid_elements:
+            element.start_pos = (element.start_pos[0] + 1, element.start_pos[1])
             coord_x, coord_y = self.coordinate(*element.start_pos)
             self.fill(coord_x, coord_y, element.color)
 
