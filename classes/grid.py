@@ -34,4 +34,3 @@ class Grid:
                 self.elements['T'] = Target((values[0], values[1]))
             elif cell_type == "O":
                 self.elements['O'].append(Obstacle((values[0], values[1])))
-        print(self.elements)
