@@ -9,7 +9,9 @@ import math
 # Main class of the CMS
 class CMS(tk.Canvas):
     def __init__(self):
+        self.is_running = False
         self.offset = 5
+        self.step = 0
 
         self.width = 600
         self.height = 600
@@ -22,25 +24,35 @@ class CMS(tk.Canvas):
                          background="black",
                          highlightthickness=0)
 
-        self.grid = Grid(0, 0)
-        self.grid.read_from_file("grid_file.in")
-        self.cell_size = min(self.width, self.height) / max(self.grid.rows, self.grid.cols) - self.offset * 2
+        self.simulation_grid = Grid(0, 0)
+        self.simulation_grid.read_from_file("grid_file.in")
+        self.cell_size = min(self.width, self.height) / max(self.simulation_grid.rows, self.simulation_grid.cols) - self.offset * 2
 
-        self.rect_start_x = self.width // 2 - self.grid.cols / 2 * self.cell_size - (self.grid.cols + 1) / 2 * (
+        self.rect_start_x = self.width // 2 - self.simulation_grid.cols / 2 * self.cell_size - (self.simulation_grid.cols + 1) / 2 * (
             self.offset)
-        self.rect_start_y = self.height // 2 - self.grid.rows / 2 * self.cell_size - (self.grid.rows + 1) / 2 * (
+        self.rect_start_y = self.height // 2 - self.simulation_grid.rows / 2 * self.cell_size - (self.simulation_grid.rows + 1) / 2 * (
             self.offset)
-        self.rect_end_x = self.width // 2 + self.grid.cols / 2 * self.cell_size + (self.grid.cols + 1) / 2 * (
+        self.rect_end_x = self.width // 2 + self.simulation_grid.cols / 2 * self.cell_size + (self.simulation_grid.cols + 1) / 2 * (
             self.offset)
-        self.rect_end_y = self.height // 2 + self.grid.rows / 2 * self.cell_size + (self.grid.rows + 1) / 2 * (
+        self.rect_end_y = self.height // 2 + self.simulation_grid.rows / 2 * self.cell_size + (self.simulation_grid.rows + 1) / 2 * (
             self.offset)
 
+    #Start or stop the simulation
+    def start_or_stop(self):
+        self.is_running = not self.is_running
         self.loop()
+    
+    #Get simulation step text object from the GUI
+    def set_step_text(self, current_step_text):
+        self.current_step_text = current_step_text
 
     # Loop.
     def loop(self):
-        self.draw()
-        self.after(500, self.loop)
+        if self.is_running:
+            self.step = self.step + 1
+            self.current_step_text.set(f"Current Step: {self.step}")
+            self.draw()
+            self.after(500, self.loop)
 
     # Draws the canvas.
     def draw(self):
@@ -68,20 +80,20 @@ class CMS(tk.Canvas):
     # Evaluates the next state of the system.
     def evaluate(self):
         if len(self.status) == 0:
-            for i in range(0, len(self.grid.elements['P'])):
+            for i in range(0, len(self.simulation_grid.elements['P'])):
                 self.status.append(False)
 
         # Rendering Obstacles.
-        for obstacle in self.grid.elements['O']:
+        for obstacle in self.simulation_grid.elements['O']:
             coord_x, coord_y = self.coordinate(*obstacle.current_pos)
             self.fill(coord_x, coord_y, obstacle.color)
 
         # Rendering Target.
-        coord_x, coord_y = self.coordinate(*self.grid.elements['T'].current_pos)
-        self.fill(coord_x, coord_y, self.grid.elements['T'].color)
+        coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
+        self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color)
 
         # Rendering Pedestrians.
-        for i, pedestrian in enumerate(self.grid.elements['P']):
+        for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
             direction = self.utility(pedestrian)
             if not self.success:
                 self.success = True
@@ -97,17 +109,17 @@ class CMS(tk.Canvas):
 
     # Utility function, calculates the distance to the target and returns the direction maximizing utility.
     def utility(self, pedestrian):
-        right = math.sqrt(pow(self.grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] + 1), 2) +
-                          pow(self.grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
+        right = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] + 1), 2) +
+                          pow(self.simulation_grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
 
-        left = math.sqrt(pow(self.grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] - 1), 2) +
-                         pow(self.grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
+        left = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] - 1), 2) +
+                         pow(self.simulation_grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
 
-        up = math.sqrt(pow(self.grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
-                       pow(self.grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] + 1), 2))
+        up = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
+                       pow(self.simulation_grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] + 1), 2))
 
-        down = math.sqrt(pow(self.grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
-                         pow(self.grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] - 1), 2))
+        down = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
+                         pow(self.simulation_grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] - 1), 2))
 
         u = [right, left, up, down]
 
