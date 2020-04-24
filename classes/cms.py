@@ -2,67 +2,55 @@ import tkinter as tk
 from classes.pedestrian import Pedestrian
 from classes.obstacle import Obstacle
 from classes.target import Target
-
+from classes.grid import Grid
 
 class CMS(tk.Canvas):
     def __init__(self):
 
-        self.red = "#CC0000"
-        self.purple = "#9900CC"
-        self.green = "#009900"
-        self.white = "#FFFFFF"
-
-        self.p = Pedestrian
-        self.o = Obstacle
-        self.t = Target
-
         self.offset = 5
-
-        self.width = 800
+        
+        self.width = 600
         self.height = 600
 
         super().__init__(width=self.width,
                          height=self.height,
                          background="black",
                          highlightthickness=0)
+        
+        self.grid = Grid(10, 10)
+        self.cell_size = 50
 
-        self.margin = {'right': 150, 'left': 150, 'top': 50, 'bottom': 50}
+        self.grid_elements = [Pedestrian((0,0))]
 
-        self.cell_size = 100
-        self.positions = [self.coordinate(*self.p.start),
-                          self.coordinate(*self.o.start),
-                          self.coordinate(*self.t.start)]
+        self.rect_start_x = self.width // 2 - self.grid.cols / 2 * (self.cell_size) - (self.grid.cols + 1) / 2 * (self.offset)
+        self.rect_start_y = self.height // 2 - self.grid.rows / 2 * (self.cell_size) - (self.grid.rows + 1) / 2 * (self.offset)
+        self.rect_end_x = self.width // 2 + self.grid.cols / 2 * (self.cell_size) + (self.grid.cols + 1) / 2 * (self.offset)
+        self.rect_end_y = self.height // 2 + self.grid.rows / 2 * (self.cell_size) + (self.grid.rows + 1) / 2 * (self.offset)
 
-        self.create()
+        self.loop()
 
-    def create(self):
+    def loop(self):
+        self.draw()
+        self.after(1000, self.loop)
 
-        self.create_text(400,
-                         25,
-                         text=f"Machine Learning in Crowd Modelling & Simulation",
-                         fill="#FFF",
-                         font=("TkDefaultFont", 15))
+    def draw(self):
+        self.delete("all")
 
         self.create_rectangle(
-            self.margin['left'] - self.offset,
-            self.margin['bottom'] - self.offset,
-            self.width - self.margin['right'] + self.offset,
-            self.height - self.margin['top'] + self.offset,
-            outline=self.white
+            self.rect_start_x,
+            self.rect_start_y,
+            self.rect_end_x,
+            self.rect_end_y,
+            outline="#FFFFFF"
         )
 
-        for i, (x, y) in enumerate(self.positions):
-            if i == 0:
-                self.fill(x, y, self.green)
-            if i == 1:
-                self.fill(x, y, self.red)
-            if i == 2:
-                self.fill(x, y, self.purple)
+        for element in self.grid_elements:
+            element.start_pos = (element.start_pos[0] + 1, element.start_pos[1])
+            coord_x, coord_y = self.coordinate(*element.start_pos)
+            self.fill(coord_x, coord_y, element.color)
 
     def coordinate(self, x, y):
-        return self.cell_size * x + self.margin['left'], self.cell_size * y + self.margin['bottom']
+        return self.rect_start_x + x * (self.cell_size) + (x + 1) * self.offset, self.rect_start_y + y * (self.cell_size) + (y + 1) * self.offset
 
     def fill(self, x, y, color):
-        offset = self.offset
-        self.create_rectangle(x + offset, y + offset, x + self.cell_size - offset, y + self.cell_size - offset,
-                              fill=color)
+        self.create_rectangle(x, y, x + self.cell_size, y + self.cell_size, fill=color)

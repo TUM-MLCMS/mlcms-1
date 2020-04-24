@@ -1,7 +1,4 @@
 class Pedestrian:
-    start = (0, 2)
-    color = "#009900"
-
-    def __init__(self):
+    def __init__(self, start_pos):
         self.color = "#009900"
-        self.start = (0, 2)
+        self.start_pos = start_pos

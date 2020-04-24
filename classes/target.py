@@ -1,7 +1,4 @@
 class Target:
-    start = (4, 2)
-    color = "#9900CC"
-
-    def __init__(self):
+    def __init__(self, start_pos):
         self.color = "#9900CC"
-        self.start = (4, 2)
+        self.start_pos = start_pos
