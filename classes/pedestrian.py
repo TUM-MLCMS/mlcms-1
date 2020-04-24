@@ -11,7 +11,7 @@ class Pedestrian:
         if not self.has_arrived:
             self.current_pos = (target[0], target[1])
 
-    # Gets all valid neighbors of the pedestrian
+    # Gets all valid neighbors of the pedestrian.
     def get_all_neighbors(self, grid_rows, grid_cols):
         neighbors = []
 
@@ -25,5 +25,5 @@ class Pedestrian:
         for row in range(start_row, end_row + 1):
             for col in range(start_col, end_col + 1):
                 neighbors.append((col, row))
-        
+
         return neighbors

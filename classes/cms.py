@@ -10,8 +10,9 @@ import math
 class CMS(tk.Canvas):
     def __init__(self):
         self.is_running = False
-        self.offset = 5
+        self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
         self.step = 0
+        self.current_step_text = ''
 
         self.width = 600
         self.height = 600
@@ -27,23 +28,25 @@ class CMS(tk.Canvas):
         self.simulation_grid.read_from_file("grid_file.in")
         self.simulation_grid.create_distance_field()
 
-        self.cell_size = min(self.width, self.height) / max(self.simulation_grid.rows, self.simulation_grid.cols) - self.offset * 2
+        self.cell_size = min(self.width - self.offset['H'] * 2, self.height - self.offset['V'] * 2) / max(
+            self.simulation_grid.rows,
+            self.simulation_grid.cols)
 
-        self.rect_start_x = self.width // 2 - self.simulation_grid.cols / 2 * self.cell_size - (self.simulation_grid.cols + 1) / 2 * (
-            self.offset)
-        self.rect_start_y = self.height // 2 - self.simulation_grid.rows / 2 * self.cell_size - (self.simulation_grid.rows + 1) / 2 * (
-            self.offset)
-        self.rect_end_x = self.width // 2 + self.simulation_grid.cols / 2 * self.cell_size + (self.simulation_grid.cols + 1) / 2 * (
-            self.offset)
-        self.rect_end_y = self.height // 2 + self.simulation_grid.rows / 2 * self.cell_size + (self.simulation_grid.rows + 1) / 2 * (
-            self.offset)
+        # New offset values set to center the simulation.
+        self.offset['V'] = (self.height - self.simulation_grid.rows * self.cell_size) / 2
+        self.offset['H'] = (self.width - self.simulation_grid.cols * self.cell_size) / 2
 
-    #Start or stop the simulation
+        self.rect_start_x = self.offset['H']
+        self.rect_start_y = self.offset['V']
+        self.rect_end_x = self.width - self.offset['H']
+        self.rect_end_y = self.height - self.offset['V']
+
+    # Start or stop the simulation
     def start_or_stop(self):
         self.is_running = not self.is_running
         self.loop()
-    
-    #Get simulation step text object from the GUI
+
+    # Get simulation step text object from the GUI
     def set_step_text(self, current_step_text):
         self.current_step_text = current_step_text
 
@@ -60,10 +63,10 @@ class CMS(tk.Canvas):
         self.delete("all")
 
         self.create_rectangle(
-            self.rect_start_x,
-            self.rect_start_y,
-            self.rect_end_x,
-            self.rect_end_y,
+            self.rect_start_x - self.offset['D']*2,
+            self.rect_start_y - self.offset['D']*2,
+            self.rect_end_x + self.offset['D']*2,
+            self.rect_end_y + self.offset['D']*2,
             outline="#FFFFFF"
         )
 
@@ -71,12 +74,15 @@ class CMS(tk.Canvas):
 
     # Returns the respective coordinates.
     def coordinate(self, x, y):
-        return self.rect_start_x + x * self.cell_size + (x + 1) * self.offset, self.rect_start_y + y * (
-            self.cell_size) + (y + 1) * self.offset
+        return self.rect_start_x + x * self.cell_size, self.rect_start_y + y * self.cell_size
 
     # Fills the cells.
     def fill(self, x, y, color):
-        self.create_rectangle(x, y, x + self.cell_size, y + self.cell_size, fill=color)
+        self.create_rectangle(x + self.offset['D'],
+                              y + self.offset['D'],
+                              x + self.cell_size - self.offset['D'],
+                              y + self.cell_size - self.offset['D'],
+                              fill=color)
 
     # Evaluates the next state of the system.
     def evaluate(self):
@@ -85,7 +91,7 @@ class CMS(tk.Canvas):
             coord_x, coord_y = self.coordinate(*obstacle.current_pos)
             self.fill(coord_x, coord_y, obstacle.color)
 
-        #Check success condition
+        # Check success condition
         self.success = True
         for pedestrian in self.simulation_grid.elements['P']:
             if not pedestrian.has_arrived:
@@ -101,12 +107,11 @@ class CMS(tk.Canvas):
                     pedestrian.has_arrived = True
 
             coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
-            self.fill(coord_x, coord_y, pedestrian.color)       
+            self.fill(coord_x, coord_y, pedestrian.color)
 
-        # Rendering Target.
+            # Rendering Target.
         coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
         self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color)
- 
 
     # Utility function, calculates the distance to the target and returns the direction maximizing utility.
     def get_move_coordinate(self, pedestrian):
@@ -114,12 +119,12 @@ class CMS(tk.Canvas):
 
         current_selected_neighbor = {}
         current_min_distance = float("inf")
-        
+
         for neighbor in neighbors:
             col, row = neighbor
             distance = self.simulation_grid.distance_field[row][col]
             if distance < current_min_distance:
                 current_min_distance = distance
                 current_selected_neighbor = neighbor
-    
+
         return current_min_distance, current_selected_neighbor
