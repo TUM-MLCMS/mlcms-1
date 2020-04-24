@@ -17,7 +17,6 @@ class CMS(tk.Canvas):
         self.height = 600
 
         self.success = False
-        self.status = []
 
         super().__init__(width=self.width,
                          height=self.height,
@@ -26,6 +25,8 @@ class CMS(tk.Canvas):
 
         self.simulation_grid = Grid(0, 0)
         self.simulation_grid.read_from_file("grid_file.in")
+        self.simulation_grid.create_distance_field()
+
         self.cell_size = min(self.width, self.height) / max(self.simulation_grid.rows, self.simulation_grid.cols) - self.offset * 2
 
         self.rect_start_x = self.width // 2 - self.simulation_grid.cols / 2 * self.cell_size - (self.simulation_grid.cols + 1) / 2 * (
@@ -79,67 +80,46 @@ class CMS(tk.Canvas):
 
     # Evaluates the next state of the system.
     def evaluate(self):
-        if len(self.status) == 0:
-            for i in range(0, len(self.simulation_grid.elements['P'])):
-                self.status.append(False)
-
         # Rendering Obstacles.
         for obstacle in self.simulation_grid.elements['O']:
             coord_x, coord_y = self.coordinate(*obstacle.current_pos)
             self.fill(coord_x, coord_y, obstacle.color)
 
+        #Check success condition
+        self.success = True
+        for pedestrian in self.simulation_grid.elements['P']:
+            if not pedestrian.has_arrived:
+                self.success = False
+                break
+
+        # Rendering Pedestrians.
+        for pedestrian in self.simulation_grid.elements['P']:
+            if not pedestrian.has_arrived:
+                distance, move_target = self.get_move_coordinate(pedestrian)
+                pedestrian.move(move_target)
+                if distance == 0:
+                    pedestrian.has_arrived = True
+
+            coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
+            self.fill(coord_x, coord_y, pedestrian.color)       
+
         # Rendering Target.
         coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
         self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color)
-
-        # Rendering Pedestrians.
-        for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
-            direction = self.utility(pedestrian)
-            if not self.success:
-                self.success = True
-                for s in self.status:
-                    if not s:
-                        self.success = False
-                pedestrian.move(direction)
-
-            coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
-            self.fill(coord_x, coord_y, pedestrian.color)
-            if direction == 'SUCCESS':
-                self.status[i] = True
+ 
 
     # Utility function, calculates the distance to the target and returns the direction maximizing utility.
-    def utility(self, pedestrian):
-        right = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] + 1), 2) +
-                          pow(self.simulation_grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
+    def get_move_coordinate(self, pedestrian):
+        neighbors = pedestrian.get_all_neighbors(self.simulation_grid.rows, self.simulation_grid.cols)
 
-        left = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - (pedestrian.current_pos[0] - 1), 2) +
-                         pow(self.simulation_grid.elements['T'].current_pos[1] - pedestrian.current_pos[1], 2))
-
-        up = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
-                       pow(self.simulation_grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] + 1), 2))
-
-        down = math.sqrt(pow(self.simulation_grid.elements['T'].current_pos[0] - pedestrian.current_pos[0], 2) +
-                         pow(self.simulation_grid.elements['T'].current_pos[1] - (pedestrian.current_pos[1] - 1), 2))
-
-        u = [right, left, up, down]
-
-        for move in u:
-            if move == 0:
-                return 'SUCCESS'
-
-        index = u.index(min(u))
-
-        if index == 0:
-            return 'R'
-
-        elif index == 1:
-            return 'L'
-
-        elif index == 2:
-            return 'U'
-
-        elif index == 3:
-            return 'D'
-
-        else:
-            return 'ERROR'
+        current_selected_neighbor = {}
+        current_min_distance = float("inf")
+        
+        for neighbor in neighbors:
+            col, row = neighbor
+            distance = self.simulation_grid.distance_field[row][col]
+            if distance < current_min_distance:
+                current_min_distance = distance
+                current_selected_neighbor = neighbor
+    
+        return current_min_distance, current_selected_neighbor
