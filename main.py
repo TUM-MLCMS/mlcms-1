@@ -9,11 +9,30 @@ root.resizable(False, False)
 
 # Create a simulation controlling button
 def on_click_simulation_control_button():
-    board.start_or_stop()
     if board.is_running:
-        simulation_control_button_text.set("Stop")
+        stop()
+
+    elif board.is_finished:
+        reset()
+
     else:
-        simulation_control_button_text.set("Run")
+        start()
+
+
+def start():
+    simulation_control_button_text.set("Stop")
+    board.start_or_stop(simulation_control_button_text)
+
+
+def stop():
+    simulation_control_button_text.set("Start")
+    board.start_or_stop(simulation_control_button_text)
+
+
+def reset():
+    current_step_text.set("Current Step: 0")
+    simulation_control_button_text.set("Stop")
+    board.reset(current_step_text, simulation_control_button_text)
 
 
 simulation_control_button_text = tk.StringVar()
