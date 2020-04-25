@@ -63,10 +63,17 @@ class CMS(tk.Canvas):
         self.is_finished = False
         self.step = 0
         self.success = False
+        self.utility = []
+        self.current_pedestrian = -1
+        self.not_arrived = [-1]
+        self.arrived = {'last_index': -1, 'flag': False}
 
         self.simulation_grid = Grid(0, 0)
         self.simulation_grid.read_from_file("grid_file.in")
         self.simulation_grid.create_distance_field()
+
+        for i in range(0, len(self.simulation_grid.elements['P'])):
+            self.not_arrived.append(i)
 
         self.is_running = True
         self.set_step_text(text)
@@ -82,7 +89,7 @@ class CMS(tk.Canvas):
             self.step = self.step + 1
             self.current_step_text.set(f"Current Step: {self.step}")
             self.draw()
-            self.after(1000, self.loop)
+            self.after(100, self.loop)
 
     # Draws the canvas.
     def draw(self):
