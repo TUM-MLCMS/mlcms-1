@@ -45,4 +45,4 @@ class Grid:
 
         for row in range(self.rows):
             for col in range(self.cols):
-                self.distance_field[row][col] = math.sqrt(pow(target_col - col, 2) + pow(target_row - row, 2))
+                self.distance_field[col][row] = math.sqrt(pow(target_col - col, 2) + pow(target_row - row, 2))
