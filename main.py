@@ -1,5 +1,6 @@
 import tkinter as tk
 from classes.cms import CMS
+import math
 
 # Create the root window
 root = tk.Tk()
@@ -34,6 +35,25 @@ def reset():
     simulation_control_button_text.set("Stop")
     board.reset(current_step_text, simulation_control_button_text)
 
+
+def circular_pedestrians():
+    output_file = open("grid_file.in", 'w+')
+
+    coordinates = []
+    R = 24
+    X = int(R)
+    for x in range(-X, X + 1):
+        Y = int((R * R - x * x) ** 0.5)
+        for y in range(-Y, Y + 1):
+            if math.sqrt(pow(x, 2) + pow(y, 2)) > 23:
+                coordinates.append("P(" + str(x + 24) + "," + str(y + 24) + ")\n")
+
+    output_file.write("GRID(50,50)\n")
+    output_file.write("T(25,25)\n")
+    output_file.writelines(coordinates)
+
+
+circular_pedestrians()
 
 simulation_control_button_text = tk.StringVar()
 simulation_control_button = tk.Button(root, textvariable=simulation_control_button_text,

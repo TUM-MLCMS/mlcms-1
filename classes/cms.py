@@ -19,6 +19,8 @@ class CMS(tk.Canvas):
         self.current_pedestrian = -1
         self.not_arrived = [-1]
         self.arrived = {'last_index': -1, 'flag': False}
+        self.show_coordinates = False
+        self.show_ids = False
 
         self.width = 600
         self.height = 600
@@ -89,7 +91,7 @@ class CMS(tk.Canvas):
             self.step = self.step + 1
             self.current_step_text.set(f"Current Step: {self.step}")
             self.draw()
-            self.after(100, self.loop)
+            self.after(1, self.loop)
 
     # Draws the canvas.
     def draw(self):
@@ -126,15 +128,16 @@ class CMS(tk.Canvas):
         # Call the evaluation, which moves and renders the current state.
         self.evaluate(self.current_pedestrian)
 
-        # Print coordinates of cells. For development.
-        for i in range(0, self.simulation_grid.rows):
-            for j in range(0, self.simulation_grid.cols):
-                x, y = self.coordinate(i, j)
+        # Print coordinates of cells. Very useful for development.
+        if self.show_coordinates:
+            for i in range(0, self.simulation_grid.rows):
+                for j in range(0, self.simulation_grid.cols):
+                    x, y = self.coordinate(i, j)
 
-                self.create_text(x + self.offset['D'] + self.cell_size / 2,
-                                 y + self.offset['D'] + self.cell_size / 1.3,
-                                 fill="#FFFFFF",
-                                 text="(" + str(i) + "," + str(j) + ")")
+                    self.create_text(x + self.offset['D'] + self.cell_size / 2,
+                                     y + self.offset['D'] + self.cell_size / 1.3,
+                                     fill="#FFFFFF",
+                                     text="(" + str(i) + "," + str(j) + ")")
 
     # Returns the respective coordinates.
     def coordinate(self, x, y):
@@ -147,10 +150,12 @@ class CMS(tk.Canvas):
                               x + self.cell_size - self.offset['D'],
                               y + self.cell_size - self.offset['D'],
                               fill=color)
-        self.create_text(x + self.offset['D'] + self.cell_size / 2,
-                         y + self.offset['D'] + self.cell_size / 2,
-                         fill="#FFFFFF",
-                         text=i)
+
+        if self.show_ids:
+            self.create_text(x + self.offset['D'] + self.cell_size / 2,
+                             y + self.offset['D'] + self.cell_size / 2,
+                             fill="#FFFFFF",
+                             text=i)
 
     # Evaluates the next state of the system.
     def evaluate(self, current):
