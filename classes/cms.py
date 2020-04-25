@@ -8,33 +8,39 @@ import math
 
 # Main class of the CMS
 class CMS(tk.Canvas):
-    def __init__(self):
+    # Resets the initial simulation values
+    def setup_initial_state(self):
         self.is_running = False
         self.is_finished = False
-        self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
         self.step = 0
+        self.success = False
+        self.utility = []  # Utility matrix that takes into account also the positions of the pedestrians.
+
+        self.debug_step = False # This enables debugging in which only one pedestrian moves per step
+        self.current_pedestrian_index = 0
+    
+        self.simulation_grid = Grid(0, 0)
+        self.simulation_grid.read_from_file(self.file_to_read)
+        self.simulation_grid.create_euclidean_distance_field()
+        self.simulation_grid.create_dijkstra_distance_field()
+
+    def __init__(self, filename):
+        self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
         self.current_step_text = None
         self.control_button = None
-        self.utility = []  # Utility matrix that takes into account also the positions of the pedestrians.
-        self.current_pedestrian = -1
-        self.not_arrived = [-1]
-        self.arrived = {'last_index': -1, 'flag': False}
         self.show_coordinates = False
         self.show_ids = False
 
         self.width = 600
         self.height = 600
-
-        self.success = False
+        self.file_to_read = filename
 
         super().__init__(width=self.width,
                          height=self.height,
                          background="black",
                          highlightthickness=0)
 
-        self.simulation_grid = Grid(0, 0)
-        self.simulation_grid.read_from_file("grid_file.in")
-        self.simulation_grid.create_distance_field()
+        self.setup_initial_state()
 
         self.cell_size = min(self.width - self.offset['H'] * 2, self.height - self.offset['V'] * 2) / max(
             self.simulation_grid.rows,
@@ -49,9 +55,6 @@ class CMS(tk.Canvas):
         self.rect_end_x = self.width - self.offset['H']
         self.rect_end_y = self.height - self.offset['V']
 
-        for i in range(0, len(self.simulation_grid.elements['P'])):
-            self.not_arrived.append(i)
-
     # Start or stop the simulation
     def start_or_stop(self, button):
         self.is_running = not self.is_running
@@ -60,22 +63,8 @@ class CMS(tk.Canvas):
 
     # Start or stop the simulation
     def reset(self, text, button):
+        self.setup_initial_state()
         self.control_button = button
-        self.is_running = False
-        self.is_finished = False
-        self.step = 0
-        self.success = False
-        self.utility = []
-        self.current_pedestrian = -1
-        self.not_arrived = [-1]
-        self.arrived = {'last_index': -1, 'flag': False}
-
-        self.simulation_grid = Grid(0, 0)
-        self.simulation_grid.read_from_file("grid_file.in")
-        self.simulation_grid.create_distance_field()
-
-        for i in range(0, len(self.simulation_grid.elements['P'])):
-            self.not_arrived.append(i)
 
         self.is_running = True
         self.set_step_text(text)
@@ -91,7 +80,7 @@ class CMS(tk.Canvas):
             self.step = self.step + 1
             self.current_step_text.set(f"Current Step: {self.step}")
             self.draw()
-            self.after(1, self.loop)
+            self.after(500, self.loop)
 
     # Draws the canvas.
     def draw(self):
@@ -106,27 +95,9 @@ class CMS(tk.Canvas):
             outline="#FFFFFF"
         )
 
-        # Update the index of the current pedestrian.
-        if len(self.not_arrived) != 1:
-            if self.arrived['flag']:
-                if self.arrived['last_index'] != len(self.not_arrived):
-                    self.current_pedestrian = self.not_arrived[self.arrived['last_index']]
-                    self.arrived = {'last_index': -1, 'flag': False}
-                else:
-                    self.current_pedestrian = self.not_arrived[1]
-                    self.arrived = {'last_index': -1, 'flag': False}
-
-            else:
-                for i in range(0, len(self.not_arrived)):
-                    if self.not_arrived[i] == self.current_pedestrian:
-                        if i == len(self.not_arrived) - 1:
-                            self.current_pedestrian = self.not_arrived[1]
-                        else:
-                            self.current_pedestrian = self.not_arrived[i + 1]
-                        break
-
         # Call the evaluation, which moves and renders the current state.
-        self.evaluate(self.current_pedestrian)
+        if not self.is_finished:
+            self.evaluate()
 
         # Print coordinates of cells. Very useful for development.
         if self.show_coordinates:
@@ -158,20 +129,38 @@ class CMS(tk.Canvas):
                              text=i)
 
     # Evaluates the next state of the system.
-    def evaluate(self, current):
+    def evaluate(self):
         # Rendering Obstacles.
         for obstacle in self.simulation_grid.elements['O']:
             coord_x, coord_y = self.coordinate(*obstacle.current_pos)
             self.fill(coord_x, coord_y, obstacle.color, "O")
+
+        # Rendering Target.
+        coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
+        self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color, "T")
+        
+        # Simulate Pedestrian movement
+        if self.debug_step:
+            pedestrians = [self.simulation_grid.elements['P'][self.current_pedestrian_index]]
+        else:
+            pedestrians = self.simulation_grid.elements['P']
+
+        for pedestrian in pedestrians:
+            if not pedestrian.has_arrived:
+                distance, move_target = self.get_move_coordinate(pedestrian)
+                pedestrian.move(move_target)
+                if distance == 0:
+                    pedestrian.has_arrived = True
 
         # Rendering Pedestrians.
         for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
             coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
             self.fill(coord_x, coord_y, pedestrian.color, str(i + 1))
 
-        # Rendering Target.
-        coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
-        self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color, "T")
+        # Render the current pedestrians next move with red. For tracking.
+        if self.debug_step:
+            coord_x, coord_y = self.coordinate(*pedestrians[0].current_pos)
+            self.fill(coord_x, coord_y, "#CC0000", str(self.current_pedestrian_index + 1))
 
         # Check success condition
         self.success = True
@@ -180,22 +169,11 @@ class CMS(tk.Canvas):
                 self.success = False
                 break
 
-        # Get the current pedestrian.
-        pedestrian = self.simulation_grid.elements['P'][current]
-
-        # Move the current pedestrian.
-        if not pedestrian.has_arrived:
-            distance, move_target = self.get_move_coordinate(pedestrian)
-            pedestrian.move(move_target)
-            if distance == 0:
-                pedestrian.has_arrived = True
-                self.arrived['flag'] = True
-                self.arrived['last_index'] = self.not_arrived.index(self.current_pedestrian)
-                self.not_arrived.remove(current)
-
-        # Render the current pedestrians next move with red. For tracking.
-        coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
-        self.fill(coord_x, coord_y, "#CC0000", str(current + 1))
+        # Assign the next pedestrian
+        if not self.success:
+            self.current_pedestrian_index = (self.current_pedestrian_index + 1) % len(self.simulation_grid.elements['P'])
+            while self.simulation_grid.elements['P'][self.current_pedestrian_index].has_arrived:
+                self.current_pedestrian_index = (self.current_pedestrian_index + 1) % len(self.simulation_grid.elements['P'])
 
         # Check if the simulation reached the desired state.
         if self.success:
@@ -210,7 +188,7 @@ class CMS(tk.Canvas):
         current_selected_neighbor = {}
         current_min_distance = float("inf")
 
-        for d in self.simulation_grid.distance_field:
+        for d in self.simulation_grid.dijkstra_field:
             self.utility.append(d[:])
 
         for i in self.simulation_grid.elements['P']:

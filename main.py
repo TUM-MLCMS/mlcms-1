@@ -1,6 +1,7 @@
 import tkinter as tk
 from classes.cms import CMS
 import math
+import sys
 
 # Create the root window
 root = tk.Tk()
@@ -37,7 +38,7 @@ def reset():
 
 
 def circular_pedestrians():
-    output_file = open("grid_file.in", 'w+')
+    output_file = open("circular_test.in", 'w+')
 
     coordinates = []
     R = 24
@@ -53,7 +54,7 @@ def circular_pedestrians():
     output_file.writelines(coordinates)
 
 
-circular_pedestrians()
+#circular_pedestrians()
 
 simulation_control_button_text = tk.StringVar()
 simulation_control_button = tk.Button(root, textvariable=simulation_control_button_text,
@@ -67,8 +68,12 @@ current_step_label = tk.Label(root, textvariable=current_step_text)
 current_step_text.set("Current Step: 0")
 current_step_label.grid(row=0, column=1, sticky=tk.W)
 
+read_file_name = "default.in"
+if len(sys.argv) > 1:
+    read_file_name = sys.argv[1]
+
 # Create the canvas
-board = CMS()
+board = CMS(read_file_name)
 board.grid(row=1, column=0, columnspan=2)
 board.set_step_text(current_step_text)
 
