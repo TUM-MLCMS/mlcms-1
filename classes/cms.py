@@ -42,10 +42,8 @@ class CMS(tk.Canvas):
 
         self.setup_initial_state()
 
-        self.cell_size = min(self.width - self.offset['H'] * 2, self.height - self.offset['V'] * 2) / max(
-            self.simulation_grid.rows,
-            self.simulation_grid.cols)
-
+        self.cell_size = min((self.width - self.offset['H']) / self.simulation_grid.cols, (self.height - self.offset['V']) / self.simulation_grid.rows)
+        
         # New offset values set to center the simulation.
         self.offset['V'] = (self.height - self.simulation_grid.rows * self.cell_size) / 2
         self.offset['H'] = (self.width - self.simulation_grid.cols * self.cell_size) / 2
@@ -54,6 +52,7 @@ class CMS(tk.Canvas):
         self.rect_start_y = self.offset['V']
         self.rect_end_x = self.width - self.offset['H']
         self.rect_end_y = self.height - self.offset['V']
+        self.draw()
 
     # Start or stop the simulation
     def start_or_stop(self, button):
@@ -80,7 +79,7 @@ class CMS(tk.Canvas):
             self.step = self.step + 1
             self.current_step_text.set(f"Current Step: {self.step}")
             self.draw()
-            self.after(500, self.loop)
+            self.after(100, self.loop)
 
     # Draws the canvas.
     def draw(self):
@@ -96,8 +95,22 @@ class CMS(tk.Canvas):
         )
 
         # Call the evaluation, which moves and renders the current state.
-        if not self.is_finished:
+        if not self.is_finished and self.is_running:
             self.evaluate()
+        
+        # Rendering Obstacles.
+        for obstacle in self.simulation_grid.elements['O']:
+            coord_x, coord_y = self.coordinate(*obstacle.current_pos)
+            self.fill(coord_x, coord_y, obstacle.color, "O")
+
+        # Rendering Target.
+        coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
+        self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color, "T")
+
+        # Rendering Pedestrians.
+        for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
+            coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
+            self.fill(coord_x, coord_y, pedestrian.color, str(i + 1))
 
         # Print coordinates of cells. Very useful for development.
         if self.show_coordinates:
@@ -129,16 +142,7 @@ class CMS(tk.Canvas):
                              text=i)
 
     # Evaluates the next state of the system.
-    def evaluate(self):
-        # Rendering Obstacles.
-        for obstacle in self.simulation_grid.elements['O']:
-            coord_x, coord_y = self.coordinate(*obstacle.current_pos)
-            self.fill(coord_x, coord_y, obstacle.color, "O")
-
-        # Rendering Target.
-        coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
-        self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color, "T")
-        
+    def evaluate(self):        
         # Simulate Pedestrian movement
         if self.debug_step:
             pedestrians = [self.simulation_grid.elements['P'][self.current_pedestrian_index]]
@@ -151,11 +155,12 @@ class CMS(tk.Canvas):
                 pedestrian.move(move_target)
                 if distance == 0:
                     pedestrian.has_arrived = True
-
-        # Rendering Pedestrians.
-        for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
-            coord_x, coord_y = self.coordinate(*pedestrian.current_pos)
-            self.fill(coord_x, coord_y, pedestrian.color, str(i + 1))
+        
+        average_speed = 0
+        for pedestrian in pedestrians:
+            average_speed = average_speed + pedestrian.get_speed()
+        average_speed = average_speed / len(pedestrians)
+        print(f"Average Speed: {average_speed}")
 
         # Render the current pedestrians next move with red. For tracking.
         if self.debug_step:

@@ -5,7 +5,7 @@ import sys
 
 # Create the root window
 root = tk.Tk()
-root.title("CMS")
+root.title("TUM-MLCMS-1 Group C")
 root.resizable(False, False)
 
 

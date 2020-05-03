@@ -1,3 +1,5 @@
+import math
+
 class Pedestrian:
     def __init__(self, start_pos):
         self.tag = 'P'
@@ -5,11 +7,18 @@ class Pedestrian:
         self.start_pos = start_pos
         self.current_pos = start_pos
         self.has_arrived = False
+        self.total_distance_moved = 0
+        self.steps_moved = 0
 
     # Moves the pedestrian to the desired direction.
     def move(self, target):
         if not self.has_arrived:
+            self.total_distance_moved = self.total_distance_moved + math.sqrt(pow(target[0] - self.current_pos[0], 2) + pow(target[1] - self.current_pos[1], 2))
+            self.steps_moved = self.steps_moved + 1
             self.current_pos = (target[0], target[1])
+
+    def get_speed(self):
+        return self.total_distance_moved/self.steps_moved
 
     # Gets all valid neighbors of the pedestrian.
     def get_all_neighbors(self, grid_rows, grid_cols):
