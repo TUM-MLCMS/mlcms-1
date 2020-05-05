@@ -1,4 +1,4 @@
-import tkinter as tk
+from tkinter import *
 from classes.pedestrian import Pedestrian
 from classes.obstacle import Obstacle
 from classes.target import Target
@@ -7,7 +7,7 @@ import math
 
 
 # Main class of the CMS
-class CMS(tk.Canvas):
+class CMS(Frame):
     # Resets the initial simulation values
     def setup_initial_state(self):
         self.is_running = False
@@ -18,32 +18,45 @@ class CMS(tk.Canvas):
 
         self.debug_step = False # This enables debugging in which only one pedestrian moves per step
         self.current_pedestrian_index = 0
-    
+
         self.simulation_grid = Grid(0, 0)
         self.simulation_grid.read_from_file(self.file_to_read)
         self.simulation_grid.create_euclidean_distance_field()
         self.simulation_grid.create_dijkstra_distance_field()
 
-    def __init__(self, filename):
+    def __init__(self, filename, master=None):
+
+        Frame.__init__(self, master)
+        Pack.config(self)
+
         self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
         self.current_step_text = None
         self.control_button = None
         self.show_coordinates = False
         self.show_ids = False
 
-        self.width = 600
-        self.height = 600
+        self.width = 3000
+        self.height = 400
         self.file_to_read = filename
 
-        super().__init__(width=self.width,
-                         height=self.height,
-                         background="black",
-                         highlightthickness=0)
+        self.canvas = Canvas(self,
+                           width=self.width,
+                           height=self.height,
+                           background="black",
+                           highlightthickness=0,
+                           scrollregion=(0, 0, self.width, self.height))
+
+        # Scrollbar.
+        self.canvas.scrollX = Scrollbar(self, orient=HORIZONTAL)
+        self.canvas['xscrollcommand'] = self.canvas.scrollX.set
+        self.canvas.scrollX['command'] = self.canvas.xview
+        self.canvas.scrollX.pack(side=BOTTOM, fill=X)
+        self.canvas.pack(side=LEFT)
 
         self.setup_initial_state()
 
         self.cell_size = min((self.width - self.offset['H']) / self.simulation_grid.cols, (self.height - self.offset['V']) / self.simulation_grid.rows)
-        
+
         # New offset values set to center the simulation.
         self.offset['V'] = (self.height - self.simulation_grid.rows * self.cell_size) / 2
         self.offset['H'] = (self.width - self.simulation_grid.cols * self.cell_size) / 2
@@ -83,10 +96,10 @@ class CMS(tk.Canvas):
 
     # Draws the canvas.
     def draw(self):
-        self.delete("all")
+        self.canvas.delete("all")
 
         # Draw the borders.
-        self.create_rectangle(
+        self.canvas.create_rectangle(
             self.rect_start_x - self.offset['D'] * 2,
             self.rect_start_y - self.offset['D'] * 2,
             self.rect_end_x + self.offset['D'] * 2,
@@ -97,7 +110,7 @@ class CMS(tk.Canvas):
         # Call the evaluation, which moves and renders the current state.
         if not self.is_finished and self.is_running:
             self.evaluate()
-        
+
         # Rendering Obstacles.
         for obstacle in self.simulation_grid.elements['O']:
             coord_x, coord_y = self.coordinate(*obstacle.current_pos)
@@ -129,7 +142,7 @@ class CMS(tk.Canvas):
 
     # Fills the cells.
     def fill(self, x, y, color, i):
-        self.create_rectangle(x + self.offset['D'],
+        self.canvas.create_rectangle(x + self.offset['D'],
                               y + self.offset['D'],
                               x + self.cell_size - self.offset['D'],
                               y + self.cell_size - self.offset['D'],
@@ -142,7 +155,7 @@ class CMS(tk.Canvas):
                              text=i)
 
     # Evaluates the next state of the system.
-    def evaluate(self):        
+    def evaluate(self):
         # Simulate Pedestrian movement
         if self.debug_step:
             pedestrians = [self.simulation_grid.elements['P'][self.current_pedestrian_index]]
@@ -155,7 +168,7 @@ class CMS(tk.Canvas):
                 pedestrian.move(move_target)
                 if distance == 0:
                     pedestrian.has_arrived = True
-        
+
         average_speed = 0
         for pedestrian in pedestrians:
             average_speed = average_speed + pedestrian.get_speed()
