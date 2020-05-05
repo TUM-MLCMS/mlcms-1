@@ -1,4 +1,8 @@
+from random import randint
 from tkinter import *
+
+import numpy
+
 from classes.pedestrian import Pedestrian
 from classes.obstacle import Obstacle
 from classes.target import Target
@@ -15,7 +19,7 @@ class CMS(Frame):
         self.step = 0
         self.success = False
         self.utility = []  # Utility matrix that takes into account also the positions of the pedestrians.
-        self.average_speed = 0 # Average speed of pedestrians at control area.
+        self.average_speed = {} # Average speeds of pedestrians at measuring areas.
 
         self.debug_step = False # This enables debugging in which only one pedestrian moves per step
         self.current_pedestrian_index = 0
@@ -24,6 +28,11 @@ class CMS(Frame):
         self.simulation_grid.read_from_file(self.file_to_read)
         self.simulation_grid.create_euclidean_distance_field()
         self.simulation_grid.create_dijkstra_distance_field()
+        self.set_ages()
+        self.set_speeds()
+
+        for i in range(len(self.simulation_grid.elements['M'])):
+            self.average_speed[i] = 0
 
     def __init__(self, filename, master=None):
 
@@ -37,7 +46,7 @@ class CMS(Frame):
         self.show_ids = False
 
         self.width = 5000
-        self.height = 300
+        self.height = 400
         self.file_to_read = filename
 
         self.canvas = Canvas(self,
@@ -52,7 +61,7 @@ class CMS(Frame):
         self.canvas['xscrollcommand'] = self.canvas.scrollX.set
         self.canvas.scrollX['command'] = self.canvas.xview
         self.canvas.scrollX.pack(side=BOTTOM, fill=X)
-        self.canvas.pack(side=LEFT)
+        self.canvas.pack(side=BOTTOM)
 
         self.setup_initial_state()
 
@@ -108,19 +117,6 @@ class CMS(Frame):
             outline="#FFFFFF"
         )
 
-        # Draw the control point.
-        self.fill(*self.coordinate(249, 11), "#404040", -1)
-        self.fill(*self.coordinate(250, 11), "#404040", -1)
-        self.fill(*self.coordinate(251, 11), "#404040", -1)
-
-        self.fill(*self.coordinate(249, 12), "#404040", -1)
-        self.fill(*self.coordinate(250, 12), "#404040", -1)
-        self.fill(*self.coordinate(251, 12), "#404040", -1)
-
-        self.fill(*self.coordinate(249, 13), "#404040", -1)
-        self.fill(*self.coordinate(250, 13), "#404040", -1)
-        self.fill(*self.coordinate(251, 13), "#404040", -1)
-
         # Call the evaluation, which moves and renders the current state.
         if not self.is_finished and self.is_running:
             self.evaluate()
@@ -133,6 +129,12 @@ class CMS(Frame):
         # Rendering Target.
         coord_x, coord_y = self.coordinate(*self.simulation_grid.elements['T'].current_pos)
         self.fill(coord_x, coord_y, self.simulation_grid.elements['T'].color, "T")
+
+        # Rendering Measure Areas.
+        for measure in self.simulation_grid.elements['M']:
+            for cell in measure.cells:
+                coord_x, coord_y = self.coordinate(*cell)
+                self.fill(coord_x, coord_y, measure.color, "M")
 
         # Rendering Pedestrians.
         for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
@@ -179,28 +181,30 @@ class CMS(Frame):
         for pedestrian in pedestrians:
             if not pedestrian.has_arrived:
                 distance, move_target = self.get_move_coordinate(pedestrian)
-                pedestrian.move(move_target)
-                if distance == 0:
+                is_moved = pedestrian.move(move_target)
+                if distance == 0 and is_moved:
                     pedestrian.has_arrived = True
 
-        count = 0
+        count = {}
 
-        for pedestrian in pedestrians:
-            if pedestrian.current_pos[0] in [249,250,251]:
-                if pedestrian.current_pos[1] in [11, 12, 13]:
-                    self.average_speed += pedestrian.get_speed()
-                    count += 1
+        for i in range(len(self.simulation_grid.elements['M'])):
+            count[i] = 0
 
-        if self.average_speed != 0:
-            print("AVERAGE SPEED: ", self.average_speed/count)
+        for i, pedestrian in enumerate(pedestrians):
 
-        self.average_speed = 0
+            # print("P #" + str(i) + " Speed: " + str(pedestrian.get_speed()) + " Max: " + str(pedestrian.max_speed))
 
-        # average_speed = 0
-        # for pedestrian in pedestrians:
-        #     average_speed = average_speed + pedestrian.get_speed()
-        # average_speed = average_speed / len(pedestrians)
-        # print(f"Average Speed: {average_speed}")
+            for j, measure in enumerate(self.simulation_grid.elements['M']):
+                if pedestrian.current_pos in measure.cells:
+                    self.average_speed[j] = self.average_speed[j] + pedestrian.get_speed()
+                    count[j] += 1
+
+        for i in range(len(self.simulation_grid.elements['M'])):
+            if self.average_speed[i] != 0:
+                print("AVERAGE SPEED FOR #", i, ": ", self.average_speed[i] / count[i])
+
+        for i in range(len(self.simulation_grid.elements['M'])):
+            self.average_speed[i] = 0
 
         # Render the current pedestrians next move with red. For tracking.
         if self.debug_step:
@@ -253,3 +257,31 @@ class CMS(Frame):
         self.utility = []
 
         return current_min_distance, current_selected_neighbor
+
+    # Approximate distribution of maximum speeds according to experimental data.
+    def set_speeds(self):
+        pedestrians = self.simulation_grid.elements['P']
+
+        for pedestrian in pedestrians:
+
+            if pedestrian.age<=20:
+                mean = 1.6
+                std = 0.3
+            elif pedestrian.age>20 and pedestrian.age<=40:
+                mean = 1.5
+                std = 0.25
+            elif pedestrian.age>40 and pedestrian.age<=60:
+                mean = 1.4
+                std = 0.25
+            else:
+                mean = 1.1
+                std = 0.1
+
+            pedestrian.max_speed = numpy.random.normal(mean, std)
+
+    # Assign age values to pedestrians.
+    def set_ages(self):
+        pedestrians = self.simulation_grid.elements['P']
+
+        for pedestrian in pedestrians:
+            pedestrian.age = randint(18, 80)

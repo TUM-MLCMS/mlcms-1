@@ -1,3 +1,4 @@
+from classes.measure import Measure
 from classes.pedestrian import Pedestrian
 from classes.obstacle import Obstacle
 from classes.target import Target
@@ -14,7 +15,8 @@ class Grid:
         self.elements = elements = {
             'P': [],
             'T': {},
-            'O': []
+            'O': [],
+            'M': []
         }
         self.rows = rows
         self.cols = cols
@@ -38,6 +40,10 @@ class Grid:
                 self.elements['T'] = Target((values[0], values[1]))
             elif cell_type == "O":
                 self.elements['O'].append(Obstacle((values[0], values[1])))
+            elif cell_type == "CM":
+                self.elements['M'].append(Measure((values[0], values[1]), 'CM'))
+            elif cell_type == "MM":
+                self.elements['M'].append(Measure((values[0], values[1]), 'MM'))
 
     # Create a distance field with euclidean distance
     def create_euclidean_distance_field(self):

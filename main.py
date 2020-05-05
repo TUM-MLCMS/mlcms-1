@@ -36,20 +36,23 @@ def reset():
     simulation_control_button_text.set("Stop")
     board.reset(current_step_text, simulation_control_button_text)
 
+top_frame = Frame(root)
 
 simulation_control_button_text = StringVar()
-simulation_control_button = Button(root, textvariable=simulation_control_button_text,
+simulation_control_button = Button(top_frame, textvariable=simulation_control_button_text,
                                       command=on_click_simulation_control_button)
 simulation_control_button_text.set("Run")
-simulation_control_button.pack()
+simulation_control_button.pack(side=LEFT)
 
 # Create a label for showing the current step
 current_step_text = StringVar()
-current_step_label = Label(root, textvariable=current_step_text)
+current_step_label = Label(top_frame, textvariable=current_step_text)
 current_step_text.set("Current Step: 0")
-current_step_label.pack()
+current_step_label.pack(side=RIGHT)
 
-read_file_name = "helper/rimea_test_4.in"
+top_frame.pack(side=TOP, padx=10, pady=10)
+
+read_file_name = "helper/data/rimea_test_7.in"
 if len(sys.argv) > 1:
     read_file_name = sys.argv[1]
 

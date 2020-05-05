@@ -3,7 +3,7 @@ from random import randint
 
 
 def generate_circular_pedestrians():
-    output_file = open("circular_test.in", 'w+')
+    output_file = open("data/circular_test.in", 'w+')
 
     coordinates = []
     R = 24
@@ -20,7 +20,7 @@ def generate_circular_pedestrians():
 
 
 def generate_test_1():
-    output_file = open("rimea_test_1.in", 'w+')
+    output_file = open("data/rimea_test_1.in", 'w+')
 
     output_file.write("GRID(102,7)\n")
 
@@ -44,9 +44,9 @@ def generate_test_1():
 def generate_test_4():
 
     width = 500
-    height = 13
+    height = 25
 
-    output_file = open("rimea_test_4.in", 'w+')
+    output_file = open("data/rimea_test_4.in", 'w+')
 
     output_file.write(f"GRID({width+2},{height+2})\n")
 
@@ -54,7 +54,7 @@ def generate_test_4():
 
     coordinates.add((width, int(height/2)))
 
-    while len(coordinates) <= 1000:
+    while len(coordinates) <= 200:
         x, y = randint(1, width), randint(1, height)
         coordinates.add((x, y))
 
@@ -73,11 +73,17 @@ def generate_test_4():
     for c in coordinates:
         output_file.write(f"P({c[0]},{c[1]})\n")
 
+    output_file.write(f"MM({int(width / 2)},{int(height / 2)})\n")
+
+    output_file.write(f"CM({int(0.45*width)},{int(height / 2)})\n")
+
+    output_file.write(f"CM({int(width / 2)},{int((height / 2) + 5)})\n")
+
     output_file.write(f"T({width},{int(height/2)})\n")
 
 
 def generate_test_6():
-    output_file = open("rimea_test_6.in", 'w+')
+    output_file = open("data/rimea_test_6.in", 'w+')
 
     output_file.write("GRID(30,30)\n")
 
@@ -100,27 +106,40 @@ def generate_test_6():
 
 
 def generate_test_7():
-    output_file = open("rimea_test_7.in", 'w+')
+    width = 50
+    height = 50
 
-    output_file.write("GRID(102,7)\n")
+    output_file = open("data/rimea_test_7.in", 'w+')
 
-    for i in range(102):
+    output_file.write(f"GRID({width + 2},{height + 2})\n")
+
+    coordinates = set()
+
+    coordinates.add((width, int(height / 2)))
+
+    while len(coordinates) <= 50:
+        x, y = randint(1, width), randint(1, height)
+        coordinates.add((x, y))
+
+    for i in range(width + 2):
         output_file.write(f"O({i},0)\n")
 
-    for i in range(5):
+    for i in range(height):
         output_file.write(f"O(0,{i + 1})\n")
 
-    for i in range(102):
-        output_file.write(f"O({i},6)\n")
+    for i in range(width + 2):
+        output_file.write(f"O({i},{height + 1})\n")
 
-    for i in range(5):
-        output_file.write(f"O(101,{i + 1})\n")
+    for i in range(height):
+        output_file.write(f"O({width + 1},{i + 1})\n")
 
-    output_file.write(f"P(1,3)\n")
+    for c in coordinates:
+        output_file.write(f"P({c[0]},{c[1]})\n")
 
-    output_file.write(f"T(100,3)\n")
+    output_file.write(f"T({width},{int(height / 2)})\n")
 
 generate_circular_pedestrians()
 generate_test_1()
 generate_test_4()
 generate_test_6()
+generate_test_7()
