@@ -15,6 +15,7 @@ class CMS(Frame):
         self.step = 0
         self.success = False
         self.utility = []  # Utility matrix that takes into account also the positions of the pedestrians.
+        self.average_speed = 0 # Average speed of pedestrians at control area.
 
         self.debug_step = False # This enables debugging in which only one pedestrian moves per step
         self.current_pedestrian_index = 0
@@ -29,14 +30,14 @@ class CMS(Frame):
         Frame.__init__(self, master)
         Pack.config(self)
 
-        self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
+        self.offset = {'V': 20, 'H': 20, 'D': 0}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
         self.current_step_text = None
         self.control_button = None
         self.show_coordinates = False
         self.show_ids = False
 
-        self.width = 3000
-        self.height = 400
+        self.width = 5000
+        self.height = 300
         self.file_to_read = filename
 
         self.canvas = Canvas(self,
@@ -107,6 +108,19 @@ class CMS(Frame):
             outline="#FFFFFF"
         )
 
+        # Draw the control point.
+        self.fill(*self.coordinate(249, 11), "#404040", -1)
+        self.fill(*self.coordinate(250, 11), "#404040", -1)
+        self.fill(*self.coordinate(251, 11), "#404040", -1)
+
+        self.fill(*self.coordinate(249, 12), "#404040", -1)
+        self.fill(*self.coordinate(250, 12), "#404040", -1)
+        self.fill(*self.coordinate(251, 12), "#404040", -1)
+
+        self.fill(*self.coordinate(249, 13), "#404040", -1)
+        self.fill(*self.coordinate(250, 13), "#404040", -1)
+        self.fill(*self.coordinate(251, 13), "#404040", -1)
+
         # Call the evaluation, which moves and renders the current state.
         if not self.is_finished and self.is_running:
             self.evaluate()
@@ -169,11 +183,24 @@ class CMS(Frame):
                 if distance == 0:
                     pedestrian.has_arrived = True
 
-        average_speed = 0
+        count = 0
+
         for pedestrian in pedestrians:
-            average_speed = average_speed + pedestrian.get_speed()
-        average_speed = average_speed / len(pedestrians)
-        print(f"Average Speed: {average_speed}")
+            if pedestrian.current_pos[0] in [249,250,251]:
+                if pedestrian.current_pos[1] in [11, 12, 13]:
+                    self.average_speed += pedestrian.get_speed()
+                    count += 1
+
+        if self.average_speed != 0:
+            print("AVERAGE SPEED: ", self.average_speed/count)
+
+        self.average_speed = 0
+
+        # average_speed = 0
+        # for pedestrian in pedestrians:
+        #     average_speed = average_speed + pedestrian.get_speed()
+        # average_speed = average_speed / len(pedestrians)
+        # print(f"Average Speed: {average_speed}")
 
         # Render the current pedestrians next move with red. For tracking.
         if self.debug_step:

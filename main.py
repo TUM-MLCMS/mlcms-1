@@ -49,7 +49,7 @@ current_step_label = Label(root, textvariable=current_step_text)
 current_step_text.set("Current Step: 0")
 current_step_label.pack()
 
-read_file_name = "rimea_test_1.in"
+read_file_name = "helper/rimea_test_4.in"
 if len(sys.argv) > 1:
     read_file_name = sys.argv[1]
 

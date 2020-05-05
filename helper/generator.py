@@ -1,4 +1,6 @@
 import math
+from random import randint
+
 
 def generate_circular_pedestrians():
     output_file = open("circular_test.in", 'w+')
@@ -40,25 +42,38 @@ def generate_test_1():
 
 
 def generate_test_4():
+
+    width = 500
+    height = 13
+
     output_file = open("rimea_test_4.in", 'w+')
 
-    output_file.write("GRID(102,7)\n")
+    output_file.write(f"GRID({width+2},{height+2})\n")
 
-    for i in range(102):
+    coordinates = set()
+
+    coordinates.add((width, int(height/2)))
+
+    while len(coordinates) <= 1000:
+        x, y = randint(1, width), randint(1, height)
+        coordinates.add((x, y))
+
+    for i in range(width+2):
         output_file.write(f"O({i},0)\n")
 
-    for i in range(5):
+    for i in range(height):
         output_file.write(f"O(0,{i + 1})\n")
 
-    for i in range(102):
-        output_file.write(f"O({i},6)\n")
+    for i in range(width+2):
+        output_file.write(f"O({i},{height+1})\n")
 
-    for i in range(5):
-        output_file.write(f"O(101,{i + 1})\n")
+    for i in range(height):
+        output_file.write(f"O({width+1},{i + 1})\n")
 
-    output_file.write(f"P(1,3)\n")
+    for c in coordinates:
+        output_file.write(f"P({c[0]},{c[1]})\n")
 
-    output_file.write(f"T(100,3)\n")
+    output_file.write(f"T({width},{int(height/2)})\n")
 
 
 def generate_test_6():
@@ -107,4 +122,5 @@ def generate_test_7():
 
 generate_circular_pedestrians()
 generate_test_1()
+generate_test_4()
 generate_test_6()
