@@ -23,3 +23,8 @@ From the table below, you can see the available options.
 | RIMEA Test #6         | 6             |
 | RIMEA Test #7         | 7             |
 
+You can also run the generator for input files.
+```python
+cd helpers
+python generator.py
+```
