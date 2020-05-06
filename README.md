@@ -46,11 +46,3 @@ _Width and height in meters, density in Person/(meters square)_
 ```python
 python main.py 4 <DENSITY> <WIDTH> <HEIGHT>
 ```
-
-*** 
-
-You can also run the generator for input files.
-```python
-cd helpers
-python generator.py
-```
