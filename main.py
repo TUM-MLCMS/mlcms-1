@@ -91,6 +91,8 @@ elif id == 'circular':
     read_file_name = "helpers/data/circular_test.in"
 elif id == 'chicken':
     read_file_name = "helpers/data/chicken_test.in"
+elif id == 'bottleneck':
+    read_file_name = "helpers/data/bottleneck.in"
 else:
     read_file_name = "helpers/data/welcome.in"
 
