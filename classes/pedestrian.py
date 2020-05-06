@@ -2,7 +2,7 @@ import math
 
 class Pedestrian:
 
-    max_speed = 0
+    max_speed = 0 # Maximum allowed speed for pedestrians.
 
     def __init__(self, start_pos):
         self.tag = 'P'
@@ -29,11 +29,11 @@ class Pedestrian:
 
     # Each cell is 40 centimeters long, and each step takes 3.325 seconds in real life.
     def get_speed(self):
-
         if self.steps_moved == 0:
             return 0
         else:
             return self.total_distance_moved/(self.steps_total/3.325)
+
 
     # Gets all valid neighbors of the pedestrian.
     def get_all_neighbors(self, grid_rows, grid_cols):

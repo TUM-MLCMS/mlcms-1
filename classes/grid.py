@@ -4,7 +4,6 @@ from classes.obstacle import Obstacle
 from classes.target import Target
 import math
 
-
 class Grid:
     rows = 0
     cols = 0
@@ -23,6 +22,7 @@ class Grid:
         self.tiles = [[0 for x in range(rows)] for y in range(rows)]
         self.distance_field = []
 
+    # Reads and processes the input file.
     def read_from_file(self, filename):
         input_file = open(filename, 'r')
         lines = input_file.readlines()
@@ -40,12 +40,14 @@ class Grid:
                 self.elements['T'] = Target((values[0], values[1]))
             elif cell_type == "O":
                 self.elements['O'].append(Obstacle((values[0], values[1])))
-            elif cell_type == "CM":
-                self.elements['M'].append(Measure((values[0], values[1]), 'CM'))
+            elif cell_type == "CM1":
+                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 1))
+            elif cell_type == "CM2":
+                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 2))
             elif cell_type == "MM":
-                self.elements['M'].append(Measure((values[0], values[1]), 'MM'))
+                self.elements['M'].append(Measure((values[0], values[1]), 'MM', 0))
 
-    # Create a distance field with euclidean distance
+    # Create a distance field with euclidean distance.
     def create_euclidean_distance_field(self):
         self.distance_field = [[0] * self.rows for col in range(self.cols)]
         target_col, target_row = self.elements['T'].current_pos
@@ -82,7 +84,7 @@ class Grid:
 
         return neighbors
 
-    # Gets the cell with smallest distance value
+    # Gets the cell with smallest distance value.
     def get_smallest_distance_cell(self, visited_set):
         current_selected_cell = None
         current_min_distance = float("inf")
@@ -95,7 +97,7 @@ class Grid:
 
         return current_selected_cell
 
-    # Create a dijkstra distance field for avoiding obstacles
+    # Create a dijkstra distance field for avoiding obstacles.
     def create_dijkstra_distance_field(self):
         self.dijkstra_field = [[float("inf")] * self.rows for col in range(self.cols)]
 

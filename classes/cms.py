@@ -1,54 +1,90 @@
 from random import randint
 from tkinter import *
-
 import numpy
-
-from classes.pedestrian import Pedestrian
-from classes.obstacle import Obstacle
-from classes.target import Target
+import csv
 from classes.grid import Grid
-import math
-
 
 # Main class of the CMS
 class CMS(Frame):
+
     # Resets the initial simulation values
     def setup_initial_state(self):
-        self.is_running = False
-        self.is_finished = False
-        self.step = 0
-        self.success = False
+        self.is_running = False # True if simulation is running.
+        self.is_finished = False # True if simulation is finished.
+        self.step = 0 # Current step.
+        self.success = False # True if all pedestrians has reached the target.
         self.utility = []  # Utility matrix that takes into account also the positions of the pedestrians.
         self.average_speed = {} # Average speeds of pedestrians at measuring areas.
 
         self.debug_step = False # This enables debugging in which only one pedestrian moves per step
-        self.current_pedestrian_index = 0
+        self.current_pedestrian_index = 0 # Index of the current pedestrian.
 
-        self.simulation_grid = Grid(0, 0)
-        self.simulation_grid.read_from_file(self.file_to_read)
-        self.simulation_grid.create_euclidean_distance_field()
-        self.simulation_grid.create_dijkstra_distance_field()
-        self.set_ages()
-        self.set_speeds()
+        self.simulation_grid = Grid(0, 0) # Simulation grid, information will be fetched from input file.
+        self.simulation_grid.read_from_file(self.file_to_read) # Reads the input.
+        self.simulation_grid.create_euclidean_distance_field() # Creates euclidean distance field.
+        self.simulation_grid.create_dijkstra_distance_field() # Creates dijkstra distance field.
 
+        # Assigning ages and setting speeds are done for only test #7, this can easily be changed for others here.
+        if self.test_id == '7':
+            self.set_ages()
+            self.set_speeds()
+
+        # Populates the average speed dictionary for control points with zeros.
         for i in range(len(self.simulation_grid.elements['M'])):
             self.average_speed[i] = 0
 
-    def __init__(self, filename, master=None):
+    def __init__(self, filename, id=None, master=None):
 
         Frame.__init__(self, master)
         Pack.config(self)
 
-        self.offset = {'V': 20, 'H': 20, 'D': 0}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
-        self.current_step_text = None
-        self.control_button = None
-        self.show_coordinates = False
-        self.show_ids = False
+        self.offset = {'V': 20, 'H': 20, 'D': 2}  # Vertical & Horizontal gap of the canvas, offset for drawing objects.
+        self.current_step_text = None # Shows the current step.
+        self.average_speed_text = None  # Average speed of all pedestrians, for test #1.
+        self.cp1_text = None  # Shows the average speed at CP #1.
+        self.cp2_text = None  # Shows the average speed at CP #2.
+        self.mcp_text = None  # Shows the average speed at Main Control Point.
+        self.control_button = None # Control button object to be fetched from GUI.
+        self.show_coordinates = False # For debugging.
+        self.show_ids = True # For debugging.
+        self.test_id = None # ID of the current test.
+        self.loop_interval = 100 #Interval between steps.
 
-        self.width = 5000
-        self.height = 400
+        if id == '1':
+            self.test_id = id
+            self.width = 1200
+            self.height = 200
+        elif id == '4':
+            self.test_id = id
+            self.width = 5000
+            self.height = 400
+            self.offset['D'] = 0
+            self.loop_interval = 1
+        elif id == '6':
+            self.test_id = id
+            self.width = 600
+            self.height = 600
+        elif id == '7':
+            self.test_id = id
+            self.width = 600
+            self.height = 600
+        elif id == 'circular':
+            self.test_id = id
+            self.width = 600
+            self.height = 600
+        elif id == 'chicken':
+            self.test_id = id
+            self.width = 600
+            self.height = 600
+        else:
+            self.test_id = id
+            self.width = 800
+            self.height = 600
+
+        # Readfile.
         self.file_to_read = filename
 
+        # Canvas.
         self.canvas = Canvas(self,
                            width=self.width,
                            height=self.height,
@@ -92,9 +128,25 @@ class CMS(Frame):
         self.set_step_text(text)
         self.loop()
 
-    # Get simulation step text object from the GUI
+    # Get simulation step text object from the GUI.
     def set_step_text(self, current_step_text):
         self.current_step_text = current_step_text
+
+    # Get the average speed text object from the GUI, for test #1.
+    def set_average_speed_text(self, average_speed_text):
+        self.average_speed_text = average_speed_text
+
+    # Get the Control Point #1 text object from the GUI, for test #4.
+    def set_cp1_text(self, control_point_text):
+        self.cp1_text = control_point_text
+
+    # Get the Control Point #2 text object from the GUI, for test #4.
+    def set_cp2_text(self, control_point_text):
+        self.cp2_text = control_point_text
+
+    # Get the Main Control Point text object from the GUI, for test #4.
+    def set_mcp_text(self, control_point_text):
+        self.mcp_text = control_point_text
 
     # Loop.
     def loop(self):
@@ -102,7 +154,7 @@ class CMS(Frame):
             self.step = self.step + 1
             self.current_step_text.set(f"Current Step: {self.step}")
             self.draw()
-            self.after(100, self.loop)
+            self.after(self.loop_interval, self.loop)
 
     # Draws the canvas.
     def draw(self):
@@ -147,7 +199,7 @@ class CMS(Frame):
                 for j in range(0, self.simulation_grid.cols):
                     x, y = self.coordinate(i, j)
 
-                    self.create_text(x + self.offset['D'] + self.cell_size / 2,
+                    self.canvas.create_text(x + self.offset['D'] + self.cell_size / 2,
                                      y + self.offset['D'] + self.cell_size / 1.3,
                                      fill="#FFFFFF",
                                      text="(" + str(i) + "," + str(j) + ")")
@@ -165,19 +217,20 @@ class CMS(Frame):
                               fill=color)
 
         if self.show_ids:
-            self.create_text(x + self.offset['D'] + self.cell_size / 2,
+            self.canvas.create_text(x + self.offset['D'] + self.cell_size / 2,
                              y + self.offset['D'] + self.cell_size / 2,
                              fill="#FFFFFF",
                              text=i)
 
     # Evaluates the next state of the system.
     def evaluate(self):
-        # Simulate Pedestrian movement
+        # Simulate Pedestrian movement.
         if self.debug_step:
             pedestrians = [self.simulation_grid.elements['P'][self.current_pedestrian_index]]
         else:
             pedestrians = self.simulation_grid.elements['P']
 
+        # Move the pedestrian.
         for pedestrian in pedestrians:
             if not pedestrian.has_arrived:
                 distance, move_target = self.get_move_coordinate(pedestrian)
@@ -185,26 +238,37 @@ class CMS(Frame):
                 if distance == 0 and is_moved:
                     pedestrian.has_arrived = True
 
-        count = {}
+        # Print average speed for tests #1 and #7.
+        if self.test_id in ['1', '7']:
+            average_speed = 0
+            for pedestrian in pedestrians:
+                average_speed = average_speed + pedestrian.get_speed()
+            average_speed = average_speed / len(pedestrians)
+            self.average_speed_text.set(f"Average Speed: {round(average_speed, 3)} m/s")
 
-        for i in range(len(self.simulation_grid.elements['M'])):
-            count[i] = 0
-
-        for i, pedestrian in enumerate(pedestrians):
-
-            # print("P #" + str(i) + " Speed: " + str(pedestrian.get_speed()) + " Max: " + str(pedestrian.max_speed))
-
-            for j, measure in enumerate(self.simulation_grid.elements['M']):
-                if pedestrian.current_pos in measure.cells:
-                    self.average_speed[j] = self.average_speed[j] + pedestrian.get_speed()
-                    count[j] += 1
-
-        for i in range(len(self.simulation_grid.elements['M'])):
-            if self.average_speed[i] != 0:
-                print("AVERAGE SPEED FOR #", i, ": ", self.average_speed[i] / count[i])
-
-        for i in range(len(self.simulation_grid.elements['M'])):
-            self.average_speed[i] = 0
+        # Print average speeds at control points for test #4.
+        if self.test_id == '4':
+            count = {}
+            for i in range(len(self.simulation_grid.elements['M'])):
+                count[i] = 0
+            for i, pedestrian in enumerate(pedestrians):
+                for j, measure in enumerate(self.simulation_grid.elements['M']):
+                    if pedestrian.current_pos in measure.cells:
+                        self.average_speed[j] = self.average_speed[j] + pedestrian.get_speed()
+                        count[j] += 1
+            for i, cp in enumerate(self.simulation_grid.elements['M']):
+                if self.average_speed[i] != 0:
+                    if cp.id == 1:
+                        self.cp1_text.set(
+                            f"Average Speed at Control Point #1: {round(self.average_speed[i] / count[i], 3)} m/s")
+                    elif cp.id == 2:
+                        self.cp2_text.set(
+                            f"Average Speed at Control Point #2: {round(self.average_speed[i] / count[i], 3)} m/s")
+                    else:
+                        self.mcp_text.set(
+                            f"Average Speed at Main Measuring Point: {round(self.average_speed[i] / count[i], 3)} m/s")
+            for i in range(len(self.simulation_grid.elements['M'])):
+                self.average_speed[i] = 0
 
         # Render the current pedestrians next move with red. For tracking.
         if self.debug_step:
@@ -229,6 +293,16 @@ class CMS(Frame):
             self.is_finished = True
             self.control_button.set("Restart")
             self.start_or_stop(self.control_button)
+
+            # Output the ages and average speeds for test #7.
+            if self.test_id == '7':
+                output = open('outputs/test_7.csv', 'w', newline='')
+                writer = csv.writer(output)
+                for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
+
+                    print(i, ":", pedestrian.age, " - ", pedestrian.get_speed(), "|", pedestrian.max_speed, " - ", pedestrian.start_pos)
+
+                    writer.writerow([pedestrian.age, pedestrian.get_speed()])
 
     # Utility function, calculates the distance to the target and returns the direction maximizing utility.
     def get_move_coordinate(self, pedestrian):
@@ -265,16 +339,16 @@ class CMS(Frame):
         for pedestrian in pedestrians:
 
             if pedestrian.age<=20:
-                mean = 1.6
+                mean = 1.5 + (pedestrian.age-18)/20
                 std = 0.3
             elif pedestrian.age>20 and pedestrian.age<=40:
-                mean = 1.5
+                mean = 1.6 - (pedestrian.age - 20)/200
                 std = 0.25
             elif pedestrian.age>40 and pedestrian.age<=60:
-                mean = 1.4
+                mean = 1.5 - (pedestrian.age-40)/100
                 std = 0.25
             else:
-                mean = 1.1
+                mean = 1.3 - (pedestrian.age-60)/35
                 std = 0.1
 
             pedestrian.max_speed = numpy.random.normal(mean, std)
