@@ -1,5 +1,6 @@
 from tkinter import *
 from classes.cms import CMS
+from helpers.generator import Generator
 import sys
 
 # Create the root window
@@ -67,6 +68,7 @@ if len(sys.argv) == 3:
     density = "0." + sys.argv[2]
     width = 200
     height = 10
+    generator = Generator(width=width, height=height, density=density, id='4')
 
 # For Test #4, check if any additional arguments given.
 if len(sys.argv) == 5:
@@ -74,6 +76,7 @@ if len(sys.argv) == 5:
     density = sys.argv[2]
     width = sys.argv[3]
     height = sys.argv[4]
+    generator = Generator(width=int(width), height=int(height), density=float(density), id='4')
 
 # Read files for test selection.
 if id == '1':
