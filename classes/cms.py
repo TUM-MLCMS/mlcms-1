@@ -310,12 +310,9 @@ class CMS(Frame):
             # Output the ages and average speeds for test #7.
             if self.test_id == '7':
                 output = open('outputs/test_7.csv', 'w', newline='')
-                writer = csv.writer(output)
+                writer = csv.writer(output, delimiter='\t')
                 for i, pedestrian in enumerate(self.simulation_grid.elements['P']):
-
-                    print(i, ":", pedestrian.age, " - ", pedestrian.get_speed(), "|", pedestrian.max_speed, " - ", pedestrian.start_pos)
-
-                    writer.writerow([pedestrian.age, pedestrian.get_speed()])
+                    writer.writerow([pedestrian.age, round(pedestrian.get_speed(),3)])
 
     # Utility function, calculates the distance to the target and returns the direction maximizing utility.
     def get_move_coordinate(self, pedestrian):
