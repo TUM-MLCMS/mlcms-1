@@ -46,7 +46,7 @@ class CMS(Frame):
         self.mcp_text = None  # Shows the average speed at Main Control Point.
         self.control_button = None # Control button object to be fetched from GUI.
         self.show_coordinates = False # For debugging.
-        self.show_ids = True # For debugging.
+        self.show_ids = False # For debugging.
         self.test_id = None # ID of the current test.
         self.loop_interval = 100 #Interval between steps.
 
@@ -256,17 +256,30 @@ class CMS(Frame):
                     if pedestrian.current_pos in measure.cells:
                         self.average_speed[j] = self.average_speed[j] + pedestrian.get_speed()
                         count[j] += 1
+            # For the flow calculation, since control points are 1x1 meters, densitiy is 'count[i]' and Flow = Speed * Density
             for i, cp in enumerate(self.simulation_grid.elements['M']):
-                if self.average_speed[i] != 0:
-                    if cp.id == 1:
+                if cp.id == 1:
+                    if count[i] == 0:
                         self.cp1_text.set(
-                            f"Average Speed at Control Point #1: {round(self.average_speed[i] / count[i], 3)} m/s")
-                    elif cp.id == 2:
+                            f"Control Point #1: 0 m/s | 0 P/m.s")
+                    else:
+                        self.cp1_text.set(
+                            f"Control Point #1: {round(self.average_speed[i] / count[i], 3)} m/s | {round(self.average_speed[i], 3)} P/m.s")
+                elif cp.id == 2:
+                    if count[i] == 0:
                         self.cp2_text.set(
-                            f"Average Speed at Control Point #2: {round(self.average_speed[i] / count[i], 3)} m/s")
+                            f"Control Point #2: 0 m/s | 0 P/m.s")
+                    else:
+                        self.cp2_text.set(
+                            f"Control Point #2: {round(self.average_speed[i] / count[i], 3)} m/s | {round(self.average_speed[i], 3)} P/m.s")
+                else:
+                    if count[i] == 0:
+                        self.mcp_text.set(
+                            f"Main Measuring Point: 0 m/s | 0 P/m.s")
                     else:
                         self.mcp_text.set(
-                            f"Average Speed at Main Measuring Point: {round(self.average_speed[i] / count[i], 3)} m/s")
+                            f"Main Measuring Point: {round(self.average_speed[i] / count[i], 3)} m/s | {round(self.average_speed[i], 3)} P/m.s")
+
             for i in range(len(self.simulation_grid.elements['M'])):
                 self.average_speed[i] = 0
 

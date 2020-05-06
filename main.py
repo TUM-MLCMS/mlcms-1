@@ -53,15 +53,36 @@ current_step_label.pack(side=RIGHT)
 top_frame.pack(side=TOP, padx=10, pady=10)
 bottom_frame.pack(side=BOTTOM, padx=10, pady=10)
 
+# Initialize selector parameters.
+id = -1
+default = True
+
 # Check if any choice made, else; just show a welcome screen.
 if len(sys.argv) > 1:
     id = sys.argv[1]
+
+# For Test #4, if no arguments for width and height is given.
+if len(sys.argv) == 3:
+    default = False
+    density = "0." + sys.argv[2]
+    width = 200
+    height = 10
+
+# For Test #4, check if any additional arguments given.
+if len(sys.argv) == 5:
+    default = False
+    density = sys.argv[2]
+    width = sys.argv[3]
+    height = sys.argv[4]
 
 # Read files for test selection.
 if id == '1':
     read_file_name = "helpers/data/rimea_test_1.in"
 elif id == '4':
-    read_file_name = "helpers/data/rimea_test_4.in"
+    if default == False:
+        read_file_name = "helpers/data/rimea_test_4_d_" + str(density) + "_w_" + str(width) + "_h_" + str(height) + ".in"
+    else:
+        read_file_name = "helpers/data/rimea_test_4.in"
 elif id == '6':
     read_file_name = "helpers/data/rimea_test_6.in"
 elif id == '7':
@@ -89,15 +110,15 @@ elif id == '4':
     read_file_name = "helpers/data/rimea_test_4.in"
     cp1_text = StringVar()
     cp1_label = Label(bottom_frame, textvariable=cp1_text)
-    cp1_text.set("Average Speed at Control Point #1: 0")
+    cp1_text.set("Control Point #1: 0 | 0")
     cp1_label.pack(side=TOP)
     cp2_text = StringVar()
     cp2_label = Label(bottom_frame, textvariable=cp2_text)
-    cp2_text.set("Average Speed at Control Point #2: 0")
+    cp2_text.set("Control Point #2: 0 | 0")
     cp2_label.pack(side=TOP)
     mcp_text = StringVar()
     mcp_label = Label(bottom_frame, textvariable=mcp_text)
-    mcp_text.set("Average Speed at Main Measuring Point: 0")
+    mcp_text.set("Main Measuring Point: 0 | 0")
     mcp_label.pack(side=TOP)
     board.set_cp1_text(cp1_text)
     board.set_cp2_text(cp2_text)

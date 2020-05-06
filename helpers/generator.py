@@ -77,22 +77,25 @@ def generate_test_1():
     output_file.write(f"T(100,3)\n")
 
 
-def generate_test_4():
+def generate_test_4(w=200, h=10, density = 0.2, default=True):
 
-    width = 500
-    height = 25
+    width = int(w*2.5)
+    height = int(h*2.5)
 
-    output_file = open("data/rimea_test_4.in", 'w+')
+    if  default:
+        output_file = open("data/rimea_test_4.in", 'w+')
+    else:
+        output_file = open("data/rimea_test_4_d_" + str(density) + "_w_" + str(w) + "_h_" + str(h) + ".in", 'w+')
+
 
     output_file.write(f"GRID({width+2},{height+2})\n")
 
     coordinates = set()
 
-    coordinates.add((width, int(height/2)))
-
-    while len(coordinates) <= 200:
+    while len(coordinates) <= w*h*density:
         x, y = randint(1, width), randint(1, height)
-        coordinates.add((x, y))
+        if (x != 50) and (y != 25):
+            coordinates.add((x, y))
 
     for i in range(width+2):
         output_file.write(f"O({i},0)\n")
@@ -177,5 +180,16 @@ generate_welcome_page()
 generate_circular_pedestrians()
 generate_test_1()
 generate_test_4()
+generate_test_4(w=1000, h=10, density=1, default=False)
+generate_test_4(w=200, h=10, density=1, default=False)
+generate_test_4(w=200, h=10, density=2, default=False)
+generate_test_4(w=200, h=10, density=3, default=False)
+generate_test_4(w=200, h=10, density=4, default=False)
+generate_test_4(w=200, h=10, density=5, default=False)
+generate_test_4(w=200, h=10, density=0.1, default=False)
+generate_test_4(w=200, h=10, density=0.2, default=False)
+generate_test_4(w=200, h=10, density=0.3, default=False)
+generate_test_4(w=200, h=10, density=0.4, default=False)
+generate_test_4(w=200, h=10, density=0.5, default=False)
 generate_test_6()
 generate_test_7()
