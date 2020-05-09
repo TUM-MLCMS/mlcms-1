@@ -65,18 +65,18 @@ if len(sys.argv) > 1:
 # For Test #4, if no arguments for width and height is given.
 if len(sys.argv) == 3:
     default = False
-    density = "0." + sys.argv[2]
+    density = float(sys.argv[2])/5
     width = 200
-    height = 10
-    generator = Generator(width=width, height=height, density=density, id='4')
+    height = 7
+    generator = Generator(width=int(width), height=int(height), density=density, id='4')
 
 # For Test #4, check if any additional arguments given.
 if len(sys.argv) == 5:
     default = False
-    density = sys.argv[2]
+    density = float(sys.argv[2])
     width = sys.argv[3]
     height = sys.argv[4]
-    generator = Generator(width=int(width), height=int(height), density=float(density), id='4')
+    generator = Generator(width=int(width), height=int(height), density=density, id='4')
 
 # Read files for test selection.
 if id == '1':

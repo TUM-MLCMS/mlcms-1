@@ -59,7 +59,7 @@ class CMS(Frame):
             self.width = 5000
             self.height = 400
             self.offset['D'] = 0
-            self.loop_interval = 1
+            self.loop_interval = 20
         elif id == '6':
             self.test_id = id
             self.width = 600

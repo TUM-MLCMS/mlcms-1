@@ -1,8 +1,8 @@
 import math
 
-class Pedestrian:
 
-    max_speed = 0 # Maximum allowed speed for pedestrians.
+class Pedestrian:
+    max_speed = 0  # Maximum allowed speed for pedestrians.
 
     def __init__(self, start_pos):
         self.tag = 'P'
@@ -21,7 +21,8 @@ class Pedestrian:
         self.steps_total += 1
         if (self.get_speed() <= self.max_speed) or (self.max_speed == 0):
             if not self.has_arrived:
-                self.total_distance_moved = self.total_distance_moved + 0.4*math.sqrt(pow(target[0] - self.current_pos[0], 2) + pow(target[1] - self.current_pos[1], 2))
+                self.total_distance_moved = self.total_distance_moved + 0.4 * math.sqrt(
+                    pow(target[0] - self.current_pos[0], 2) + pow(target[1] - self.current_pos[1], 2))
                 self.steps_moved = self.steps_moved + 1
                 self.current_pos = (target[0], target[1])
                 return True
@@ -32,8 +33,7 @@ class Pedestrian:
         if self.steps_moved == 0:
             return 0
         else:
-            return self.total_distance_moved/(self.steps_total/3.325)
-
+            return self.total_distance_moved / (self.steps_total / 3.325)
 
     # Gets all valid neighbors of the pedestrian.
     def get_all_neighbors(self, grid_rows, grid_cols):

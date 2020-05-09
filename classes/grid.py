@@ -41,11 +41,11 @@ class Grid:
             elif cell_type == "O":
                 self.elements['O'].append(Obstacle((values[0], values[1])))
             elif cell_type == "CM1":
-                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 1))
+                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 1, self.rows))
             elif cell_type == "CM2":
-                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 2))
+                self.elements['M'].append(Measure((values[0], values[1]), 'CM', 2, self.rows))
             elif cell_type == "MM":
-                self.elements['M'].append(Measure((values[0], values[1]), 'MM', 0))
+                self.elements['M'].append(Measure((values[0], values[1]), 'MM', 0, self.rows))
 
     # Create a distance field with euclidean distance.
     def create_euclidean_distance_field(self):
